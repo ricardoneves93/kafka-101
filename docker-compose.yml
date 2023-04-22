@@ -31,6 +31,19 @@ services:
         kafka-connect-status:1:1:compact
     depends_on:
       - zookeeper
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.0.9
+    container_name: schema-registry
+    ports:
+      - '8081:8081'
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://broker:19092
+      SCHEMA_REGISTRY_HOST_NAME: kafka-schema-registry
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    depends_on:
+      - zookeeper
+      - broker
   
   akhq:
     image: 'tchiotludo/akhq'
@@ -42,11 +55,14 @@ services:
             docker-kafka-server:
               properties:
                 bootstrap.servers: 'broker:19092'
+              schema-registry:
+                url: "http://schema-registry:8081"
     ports:
       - '8082:8080'
     depends_on:
       - zookeeper
       - broker
+      - schema-registry
 
   kafka-connect:
     image: 'confluentinc/cp-kafka-connect:latest'
