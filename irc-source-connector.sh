@@ -5,8 +5,8 @@ curl --location 'http://localhost:8083/connectors' \
     "config": {
     "connector.class": "com.github.cjmatta.kafka.connect.irc.IrcSourceConnector",
     "irc.server": "irc.dal.net",
-    "kafka.topic": "algorithms",
-    "irc.channels": "#Algorithms",
+    "kafka.topic": "irc-messages",
+    "irc.channels": "#Programming",
     "tasks.max": "2",
     "key.converter": "org.apache.kafka.connect.json.JsonConverter",
     "value.converter": "org.apache.kafka.connect.json.JsonConverter",
