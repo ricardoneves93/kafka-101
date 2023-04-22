@@ -97,7 +97,7 @@ public class KafkaConfiguration {
      * Stream that counts the number of occurrences of each word and saves in a KTable called counts
      */
     @Bean
-    public KStream<String, String> wordCountKStream(StreamsBuilder streamsBuilder) {
+    public KStream<String, String> wordCountStream(StreamsBuilder streamsBuilder) {
         KStream<String, String> stream = streamsBuilder
                 .stream("input-topic", Consumed.with(Serdes.String(), Serdes.String()))
                 .map((key, value) -> KeyValue.pair(key, value.toLowerCase()))
