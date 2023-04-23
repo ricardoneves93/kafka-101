@@ -26,7 +26,8 @@ public class KafkaController {
 
     @PostMapping("/publish")
     public ResponseEntity<Void> publishMessage(@RequestBody Message message) {
-        kafkaService.sendMessage("input-topic", message.key(), message.value());
+//        kafkaService.sendMessage("input-topic", message.key(), message.value());
+        kafkaService.sendMessageWithSchema("input-topic-schema", message.key(), message.value());
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }

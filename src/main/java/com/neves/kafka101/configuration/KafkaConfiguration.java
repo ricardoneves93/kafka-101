@@ -1,5 +1,8 @@
 package com.neves.kafka101.configuration;
 
+import com.neves.kafka101.schemas.MessageSchema;
+import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -38,6 +41,10 @@ public class KafkaConfiguration {
     @Value(value = "${spring.kafka.bootstrap-servers}")
     private String bootstrapAddress;
 
+    @Value(value = "${spring.kafka.schema-registry-url}")
+    private String schemaRegistryUrl;
+
+
     // Producer configuration
 
     @Bean
@@ -50,8 +57,25 @@ public class KafkaConfiguration {
     }
 
     @Bean
+    public ProducerFactory<String, MessageSchema> producerFactoryWithSchema() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
+
+        // Schema Registry configuration
+        configProps.put(KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
+        return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    @Bean
     public KafkaTemplate<String, String> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
+    }
+
+    @Bean
+    public KafkaTemplate<String, MessageSchema> kafkaTemplateWithSchema() {
+        return new KafkaTemplate<>(producerFactoryWithSchema());
     }
 
     // Streams configuration

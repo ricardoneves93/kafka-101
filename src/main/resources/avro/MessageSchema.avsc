@@ -1,0 +1,22 @@
+{
+  "type": "record",
+  "name": "MessageSchema",
+  "namespace": "com.neves.kafka101.schemas",
+  "fields": [
+    {
+      "name": "uuid",
+      "type": "string",
+      "doc": "Unique identifier for the message"
+    },
+    {
+      "name": "content",
+      "type": "string",
+      "doc": "Message content"
+    },
+    {
+      "name": "timestamp",
+      "type": "long",
+      "doc": "Timestamp of the message"
+    }
+  ]
+}
