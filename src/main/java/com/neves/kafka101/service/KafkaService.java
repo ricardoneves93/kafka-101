@@ -41,11 +41,7 @@ public class KafkaService {
         System.out.println("Received Message to store on DB! Key:" + record.key() + " Value: " + record.value());
     }
 
-    @KafkaListener(topics = "input-topic-schema", groupId = "consumer-group-schema", properties = {
-            "spring.kafka.consumer.key-deserializer=org.apache.kafka.common.serialization.StringDeserializer",
-            "spring.kafka.consumer.value-deserializer=io.confluent.kafka.serializers.KafkaAvroDeserializer",
-            "spring.kafka.consumer.properties.schema.registry.url=http://localhost:8081"
-    })
+    @KafkaListener(topics = "input-topic-schema", groupId = "consumer-group-schema", containerFactory = "defaultKafkaListenerFactory")
     public void consumerSchema(ConsumerRecord<String, GenericRecord> record) {
         System.out.println("Received Message! Key:" + record.key() + " Content: " + record.value());
     }
