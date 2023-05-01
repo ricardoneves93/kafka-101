@@ -24,14 +24,24 @@ public class KafkaController {
     private final KafkaService kafkaService;
     private final StreamsBuilderFactoryBean streamsBuilderFactoryBean;
 
+
+    // http POST localhost:8080/publish key="userId-1" value="Kafka Producer and Consumer"
     @PostMapping("/publish")
     public ResponseEntity<Void> publishMessage(@RequestBody Message message) {
-//        kafkaService.sendMessage("input-topic", message.key(), message.value());
+        kafkaService.sendMessage("input-topic", message.key(), message.value());
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    // http POST localhost:8080/publish-with-schema key="userId-2" value="Kafka Producer and Consumer"
+    @PostMapping("/publish-with-schema")
+    public ResponseEntity<Void> publishMessageWithSchema(@RequestBody Message message) {
         kafkaService.sendMessageWithSchema("input-topic-schema", message.key(), message.value());
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    // http GET localhost:8080/count
     @GetMapping("/count")
     public ResponseEntity<List<WordCountResponse>> getWordCountList() {
         KafkaStreams kafkaStreams = streamsBuilderFactoryBean.getKafkaStreams();
@@ -48,8 +58,9 @@ public class KafkaController {
         return ResponseEntity.ok(words.subList(0, Math.min(words.size(), 10)));
     }
 
+    // http GET localhost:8080/count/{word}
     @GetMapping("/count/{word}")
-    public ResponseEntity<WordCountResponse> getWordCount(@PathVariable String word) {
+    public ResponseEntity<WordCountResponse> getSingleWordCount(@PathVariable String word) {
         KafkaStreams kafkaStreams = streamsBuilderFactoryBean.getKafkaStreams();
         ReadOnlyKeyValueStore<String, Long> counts = kafkaStreams.store(
                 StoreQueryParameters.fromNameAndType("counts", QueryableStoreTypes.keyValueStore())

@@ -13,10 +13,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Materialized;
-import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,9 +45,9 @@ public class KafkaConfiguration {
     @Value(value = "${spring.kafka.schema-registry-url}")
     private String schemaRegistryUrl;
 
-
-    // Producer configuration
-
+    /**
+     * Producer configuration
+     */
     @Bean
     public ProducerFactory<String, String> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
@@ -82,7 +79,28 @@ public class KafkaConfiguration {
         return new KafkaTemplate<>(producerFactoryWithSchema());
     }
 
-    // Streams configuration
+    /**
+     * Consumer bean to consume messages with schema
+     */
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory defaultKafkaListenerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+
+        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
+        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
+        configProps.put(KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
+
+        ConcurrentKafkaListenerContainerFactory factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(new DefaultKafkaConsumerFactory<>(configProps));
+
+        return factory;
+    }
+
+    /**
+     * Streams configuration
+     */
+
     @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
     KafkaStreamsConfiguration kStreamsConfig() {
         Map<String, Object> props = new HashMap<>();
@@ -125,35 +143,13 @@ public class KafkaConfiguration {
      * Stream that counts the number of occurrences of each word and saves in a KTable called counts
      */
     @Bean
-    public KStream<String, String> wordCountStream(StreamsBuilder streamsBuilder) {
-        KStream<String, String> stream = streamsBuilder
-                .stream("input-topic", Consumed.with(Serdes.String(), Serdes.String()))
-                .map((key, value) -> KeyValue.pair(key, value.toLowerCase()))
-                .flatMapValues(value -> Arrays.asList(value.split("\\W+")))
-                .selectKey((ignoredKey, individualWord) -> individualWord)
-                .selectKey((key, value) -> value);
-
-        stream.groupByKey()
-                .count(Materialized.as("counts"));
-
-        return stream;
-    }
-
-    /**
-     * Consumer bean to consume messages with schema
-     */
-    @Bean
-    public ConcurrentKafkaListenerContainerFactory defaultKafkaListenerFactory() {
-        Map<String, Object> configProps = new HashMap<>();
-
-        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
-        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
-        configProps.put(KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
-
-        ConcurrentKafkaListenerContainerFactory factory = new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(new DefaultKafkaConsumerFactory<>(configProps));
-
-        return factory;
+    public KTable<String, Long> wordCountStream(StreamsBuilder streamsBuilder) {
+        return streamsBuilder
+                .stream("input-topic", Consumed.with(Serdes.String(), Serdes.String())) // Create a Stream pointing to input-topic
+                .map((key, value) -> KeyValue.pair(key, value.toLowerCase())) // Convert the value to lower case
+                .flatMapValues(value -> Arrays.asList(value.split("\\W+"))) // Separate the words
+                .selectKey((ignoredKey, individualWord) -> individualWord)// Use the word as the key
+                .groupByKey() // Group by individual word
+                .count(Materialized.as("counts")); // Count the number of occurrences of each word and save it on a state Store called counts
     }
 }
