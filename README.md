@@ -44,9 +44,18 @@ To demonstrate Consumer Groups concept there are two Kafka Consumers that were c
 There is a source connector plugin that is already installed in alongside with Kafka connect docker-compose service.
 It is a IRC connector that will consume from the IRC channel `#kafka` and publish the messages to the topic `irc-kafka`.
 We need to create an connector instance as well, there are many ways you can achieve this, in this case, the
-kafka-connect REST
-API will be used, you can find the configuration in the `irc-source-connector.sh`.
+kafka-connect REST  API will be used, you can find the configuration in the `irc-source-connector.sh`.
 Check the Kafka Connect logs with `docker logs -f kafka-connect` to see the connector instance being created with no
 errors.
+
+You can also check ig the connector was created by invoking kafka connect restful api. You can execute
+```curl http://localhost:8083/connectors``` to get a list of all connectors, you can execute
+```curl http://localhost:8083/connectors/irc-source-connector``` to get the connector instance configuration.
+You can also call ```curl "http://localhost:8083/connectors?expand=status"``` to get the connector status.
+
+In order to test the connector, you can go to http://www.dal.net:9090/ and join the channel `#programming` and start 
+sending messages. The connector should consume the messages and publish them to the configured topic `irc-messages`.
+
+If you want to see the messages you can open the AKHQ that is running on http://localhost:8082/.
 
 
